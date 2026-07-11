@@ -32,6 +32,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "prepublishOnly": "nr build",
     "release": "bumpp",
     "start": "tsx src/index.ts",
