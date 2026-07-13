@@ -92,6 +92,33 @@ doc.merge('MP-WEIXIN', [{ path: 'pages/wx2' }], 'pages')
 doc.delete('MP-WEIXIN', 'pages')
 ```
 
+### 与平台无关的配置（COMMON）
+
+如果写入的配置不依赖任何平台（即不带条件编译注释），可传 `COMMON` 作为 platform：
+
+```ts
+import { COMMON, parse } from '@uni-helper/jsonu'
+
+// 在根级写入通用 globalStyle（不带 #ifdef 包裹）
+doc.set(COMMON, { globalStyle: { navigationBarTitleText: '通用标题' } })
+
+// 在嵌套路径写入通用字段
+doc.set(COMMON, { navigationBarTitleText: '通用' }, ['pages', 0, 'style'])
+
+// 往数组追加通用元素
+doc.merge(COMMON, [{ path: 'pages/common' }], 'pages')
+
+// 删除该位置所有无条件节点（注意：会清掉同容器下所有通用数据，谨慎使用）
+doc.delete(COMMON, 'pages')
+```
+
+`COMMON` 是导出的常量，值为 `'*'`。语义说明：
+
+- `set(COMMON, data, path?)`：按 key 覆盖容器中无 condition 的同 key member（数组则全删无 condition 元素再追加）。不会误清同容器内其他 key 的通用配置。
+- `merge(COMMON, data, path?)`：直接追加无 condition 数据。
+- `delete(COMMON, path?)`：删除该位置所有无 condition 的 member/element。⚠️ 这是全删操作，等同 `delete('MP-WEIXIN', path)` 会删该位置所有 MP-WEIXIN 节点。
+- `evaluate` 对无 condition 节点所有平台均保留。
+
 ### doc.stringify(indent?)
 
 往返回写为带条件编译注释的 jsonu 字符串。`indent` 默认 `2`。

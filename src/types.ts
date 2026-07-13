@@ -31,3 +31,7 @@ export interface ConditionalRange {
 
 // 路径
 export type Path = (string | number)[] | string
+
+// 与平台无关的配置标识
+// 当 set/merge/delete 的 platform 传此值时，操作的是不带条件编译的通用节点
+export const COMMON = '*'
