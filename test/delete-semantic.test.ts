@@ -11,7 +11,7 @@ describe('delete semantic 语义删除', () => {
         // #endif
       ]
     }`)
-    doc.delete('MP-WEIXIN', 'pages')
+    doc.delete('MP-WEIXIN', ['pages'])
     // 精确匹配：'H5 || MP-WEIXIN' !== 'MP-WEIXIN'，块保留
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
@@ -30,7 +30,7 @@ describe('delete semantic 语义删除', () => {
         // #endif
       ]
     }`)
-    doc.delete('MP-WEIXIN', 'pages', { semantic: true })
+    doc.delete('MP-WEIXIN', ['pages'], { semantic: true })
     // 语义匹配：'H5 || MP-WEIXIN' 在 MP-WEIXIN 平台生效，块被删
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [{ path: 'pages/index' }],
@@ -51,7 +51,7 @@ describe('delete semantic 语义删除', () => {
       ]
     }`)
     // MP-WEIXIN 平台下 ifndef H5 生效，semantic 删除应移除该块
-    doc.delete('MP-WEIXIN', 'pages', { semantic: true })
+    doc.delete('MP-WEIXIN', ['pages'], { semantic: true })
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [{ path: 'pages/index' }],
     })
@@ -67,7 +67,7 @@ describe('delete semantic 语义删除', () => {
       ]
     }`)
     // H5 块在 MP-WEIXIN 平台不生效，semantic 删除不应移除
-    doc.delete('MP-WEIXIN', 'pages', { semantic: true })
+    doc.delete('MP-WEIXIN', ['pages'], { semantic: true })
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [{ path: 'pages/index' }],
     })

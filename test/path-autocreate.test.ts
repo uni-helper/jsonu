@@ -27,9 +27,9 @@ describe('路径自动创建', () => {
     `)
   })
 
-  it('set 用字符串路径自动创建', () => {
+  it('set 用单段路径自动创建', () => {
     const doc = parse(`{}`)
-    doc.set('MP-WEIXIN', { list: [{ pagePath: 'pages/wx' }] }, 'tabBar')
+    doc.set('MP-WEIXIN', { list: [{ pagePath: 'pages/wx' }] }, ['tabBar'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       tabBar: { list: [{ pagePath: 'pages/wx' }] },
     })
@@ -37,7 +37,7 @@ describe('路径自动创建', () => {
 
   it('merge 在不存在的路径上自动创建并追加', () => {
     const doc = parse(`{}`)
-    doc.merge('MP-WEIXIN', [{ path: 'pages/wx' }], 'pages')
+    doc.merge('MP-WEIXIN', [{ path: 'pages/wx' }], ['pages'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [{ path: 'pages/wx' }],
     })
@@ -57,7 +57,7 @@ describe('路径自动创建', () => {
 
   it('common 在不存在的路径上自动创建通用配置', () => {
     const doc = parse(`{}`)
-    doc.set('*', { navigationBarTitleText: '通用' }, 'globalStyle')
+    doc.set('*', { navigationBarTitleText: '通用' }, ['globalStyle'])
     expect(doc.evaluate('H5')).toEqual({
       globalStyle: { navigationBarTitleText: '通用' },
     })
@@ -66,7 +66,7 @@ describe('路径自动创建', () => {
   it('delete 不存在的路径是 no-op', () => {
     const doc = parse(`{ "a": 1 }`)
     // 不存在的路径不应抛错
-    doc.delete('MP-WEIXIN', 'notExist.deep.path')
+    doc.delete('MP-WEIXIN', ['notExist', 'deep', 'path'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({ a: 1 })
   })
 

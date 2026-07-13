@@ -63,25 +63,13 @@ doc.evaluate<PageConfig[]>('MP-WEIXIN')
 
 ### 路径语法
 
-`set` / `merge` / `delete` 的 `path` 参数支持两种形式：
-
-**数组形式**（推荐，无歧义）：
+`set` / `merge` / `delete` 的 `path` 参数只支持**数组形式**（无歧义）：
 
 ```ts
 doc.set('MP-WEIXIN', data, ['pages', 0, 'style'])
 ```
 
-**字符串形式**，支持 dot、bracket、引号包裹的 key：
-
-```ts
-'pages[0].style' // bracket 数字索引
-'pages.0.style' // dot 中纯数字段也转数组索引
-'a["b.c"].d' // 引号包裹含点号的 key
-'a[\'b.c\'].d' // 单引号同理
-'[\'x\'][\'y\']' // 连续 bracket
-```
-
-含点号的 key 必须用引号包裹，否则会被拆分。字符串形式不适合复杂场景时，请用数组形式。
+数组每段为 `string`（对象 key）或 `number`（数组索引）。含点号、空格等特殊字符的 key 直接作为字符串段传入即可，无需转义。
 
 ### doc.set(platform, data, path?)
 
@@ -101,14 +89,11 @@ doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style']
 // 根级
 doc.set('MP-WEIXIN', { globalStyle: { navigationBarTitleText: '微信' } })
 
-// 嵌套路径（数组形式，数字为数组索引）
+// 嵌套路径（数字为数组索引）
 doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style'])
 
-// 嵌套路径（字符串形式）
-doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, 'pages.0.style')
-
 // 标量叶子
-doc.set('MP-WEIXIN', '微信', 'pages[0].style.navigationBarTitleText')
+doc.set('MP-WEIXIN', '微信', ['pages', 0, 'style', 'navigationBarTitleText'])
 ```
 
 ### doc.merge(platform, data, path?)
@@ -116,7 +101,7 @@ doc.set('MP-WEIXIN', '微信', 'pages[0].style.navigationBarTitleText')
 增量写入：不移除已有条件数据。对象 → 合并字段，数组 → 追加元素。`data` 同样支持标量叶子。
 
 ```ts
-doc.merge('MP-WEIXIN', [{ path: 'pages/wx2' }], 'pages')
+doc.merge('MP-WEIXIN', [{ path: 'pages/wx2' }], ['pages'])
 doc.merge('MP-WEIXIN', '追加值', ['pages', 0, 'style', 'navigationBarTitleText'])
 ```
 
@@ -125,7 +110,7 @@ doc.merge('MP-WEIXIN', '追加值', ['pages', 0, 'style', 'navigationBarTitleTex
 删除该位置该平台的条件数据。
 
 ```ts
-doc.delete('MP-WEIXIN', 'pages')
+doc.delete('MP-WEIXIN', ['pages'])
 ```
 
 `options.semantic`（默认 `false`）控制匹配方式：
@@ -135,10 +120,10 @@ doc.delete('MP-WEIXIN', 'pages')
 
 ```ts
 // 精确：删不掉 #ifdef H5 || MP-WEIXIN 块
-doc.delete('MP-WEIXIN', 'pages')
+doc.delete('MP-WEIXIN', ['pages'])
 
 // 语义：删掉所有在 MP-WEIXIN 平台生效的条件块（含复合表达式、ifndef H5）
-doc.delete('MP-WEIXIN', 'pages', { semantic: true })
+doc.delete('MP-WEIXIN', ['pages'], { semantic: true })
 ```
 
 ### 与平台无关的配置（COMMON）
@@ -155,10 +140,10 @@ doc.set(COMMON, { globalStyle: { navigationBarTitleText: '通用标题' } })
 doc.set(COMMON, { navigationBarTitleText: '通用' }, ['pages', 0, 'style'])
 
 // 往数组追加通用元素
-doc.merge(COMMON, [{ path: 'pages/common' }], 'pages')
+doc.merge(COMMON, [{ path: 'pages/common' }], ['pages'])
 
 // 删除该位置所有无条件节点（注意：会清掉同容器下所有通用数据，谨慎使用）
-doc.delete(COMMON, 'pages')
+doc.delete(COMMON, ['pages'])
 ```
 
 `COMMON` 是导出的常量，值为 `'*'`。语义说明：
@@ -188,7 +173,7 @@ const doc = parse(`{
 }`)
 
 // 给微信小程序添加专属页面
-doc.merge('MP-WEIXIN', [{ path: 'pages/wx', style: { navigationBarTitleText: '微信' } }], 'pages')
+doc.merge('MP-WEIXIN', [{ path: 'pages/wx', style: { navigationBarTitleText: '微信' } }], ['pages'])
 
 // 给微信小程序覆盖首页标题（在 style 对象内追加条件 member，同 key 覆盖）
 doc.set('MP-WEIXIN', { navigationBarTitleText: '微信首页' }, ['pages', 0, 'style'])

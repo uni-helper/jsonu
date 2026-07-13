@@ -40,7 +40,7 @@ describe('common 平台无关配置', () => {
 
   it('merge 用 COMMON 往数组追加无条件元素', () => {
     const doc = parse(jsonu)
-    doc.merge(COMMON, [{ path: 'pages/common' }], 'pages')
+    doc.merge(COMMON, [{ path: 'pages/common' }], ['pages'])
     expect(doc.evaluate('H5')).toEqual({
       pages: [
         { path: 'pages/index', style: { navigationBarTitleText: '默认' } },
@@ -79,7 +79,7 @@ describe('common 平台无关配置', () => {
       ]
     }`)
     // delete COMMON 不应误删这个条件块
-    doc.delete(COMMON, 'pages')
+    doc.delete(COMMON, ['pages'])
     expect(doc.evaluate('*')).toEqual({
       pages: [{ path: 'pages/star' }],
     })

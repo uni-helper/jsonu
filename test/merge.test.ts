@@ -5,7 +5,7 @@ import { jsonu } from './fixtures'
 describe('merge', () => {
   it('往 pages 数组追加条件元素', () => {
     const doc = parse(jsonu)
-    doc.merge('MP-WEIXIN', [{ path: 'pages/wx2', style: { navigationBarTitleText: '微信2' } }], 'pages')
+    doc.merge('MP-WEIXIN', [{ path: 'pages/wx2', style: { navigationBarTitleText: '微信2' } }], ['pages'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
         { path: 'pages/index', style: { navigationBarTitleText: '默认' } },

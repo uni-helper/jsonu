@@ -189,30 +189,7 @@ export class JsonuDocument {
 }
 
 function normalizePath(path?: Path): (string | number)[] {
-  if (!path)
-    return []
-  if (Array.isArray(path))
-    return path
-  return parsePathString(path)
-}
-
-// 解析路径字符串，支持 dot / bracket / 引号包裹的 key
-// 例: 'pages[0].style' / 'a["b.c"].d' / 'pages.0.style' / "['x']['y']"
-// 纯数字段（含 bracket 内）转 number 作数组索引；引号包裹的段保留原始字符串
-function parsePathString(str: string): (string | number)[] {
-  const result: (string | number)[] = []
-  const re = /\['([^']*)'\]|\["([^"]*)"\]|(\d+)|([^.[\]]+)/g
-  for (let m = re.exec(str); m !== null; m = re.exec(str)) {
-    if (m[1] !== undefined)
-      result.push(m[1])
-    else if (m[2] !== undefined)
-      result.push(m[2])
-    else if (m[3] !== undefined)
-      result.push(Number(m[3]))
-    else if (m[4] !== undefined)
-      result.push(m[4])
-  }
-  return result
+  return path ?? []
 }
 
 // 标量叶子写入：path 最后一段作为 key，剩余作为父容器路径

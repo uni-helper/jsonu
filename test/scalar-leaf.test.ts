@@ -32,29 +32,29 @@ describe('标量叶子写入', () => {
 
   it('set 用 COMMON 写入标量通用值', () => {
     const doc = parse(`{}`)
-    doc.set('*', '通用标题', 'title')
+    doc.set('*', '通用标题', ['title'])
     expect(doc.evaluate('H5')).toEqual({ title: '通用标题' })
     expect(doc.evaluate('MP-WEIXIN')).toEqual({ title: '通用标题' })
   })
 
   it('merge 支持数字和布尔标量追加', () => {
     const doc = parse(`{}`)
-    doc.merge('MP-WEIXIN', 42, 'count')
-    doc.merge('MP-WEIXIN', true, 'enabled')
+    doc.merge('MP-WEIXIN', 42, ['count'])
+    doc.merge('MP-WEIXIN', true, ['enabled'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({ count: 42, enabled: true })
   })
 
   it('set 同平台二次覆盖（覆盖语义）', () => {
     const doc = parse(`{}`)
-    doc.set('MP-WEIXIN', 42, 'count')
-    doc.set('MP-WEIXIN', true, 'enabled')
+    doc.set('MP-WEIXIN', 42, ['count'])
+    doc.set('MP-WEIXIN', true, ['enabled'])
     // set 覆盖：第二次清掉第一次的 MP-WEIXIN 根级 member
     expect(doc.evaluate('MP-WEIXIN')).toEqual({ enabled: true })
   })
 
   it('set 支持 null 标量', () => {
     const doc = parse(`{}`)
-    doc.set('MP-WEIXIN', null, 'value')
+    doc.set('MP-WEIXIN', null, ['value'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({ value: null })
   })
 
