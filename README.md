@@ -49,21 +49,53 @@ const doc = parse(`{
 
 ### doc.evaluate(platform)
 
-按平台裁剪，返回普通 JS 对象（条件注释全部消除）。
+按平台裁剪，返回普通 JS 对象（条件注释全部消除）。支持泛型，便于调用方收窄返回类型。
 
 ```ts
 doc.evaluate('H5')
 // { pages: [{ path: 'pages/index' }] }
 
-doc.evaluate('MP-WEIXIN')
+doc.evaluate<PageConfig[]>('MP-WEIXIN')
 // { pages: [{ path: 'pages/index' }, { path: 'pages/wx' }] }
 ```
 
 平台名与 uniapp 条件编译平台一致：`H5`、`MP-WEIXIN`、`APP-PLUS` 等。`#ifndef H5` 表示非 H5 平台均保留。多平台用 `||` 连接，如 `H5 || MP-WEIXIN`。
 
+### 路径语法
+
+`set` / `merge` / `delete` 的 `path` 参数支持两种形式：
+
+**数组形式**（推荐，无歧义）：
+
+```ts
+doc.set('MP-WEIXIN', data, ['pages', 0, 'style'])
+```
+
+**字符串形式**，支持 dot、bracket、引号包裹的 key：
+
+```ts
+'pages[0].style' // bracket 数字索引
+'pages.0.style' // dot 中纯数字段也转数组索引
+'a["b.c"].d' // 引号包裹含点号的 key
+'a[\'b.c\'].d' // 单引号同理
+'[\'x\'][\'y\']' // 连续 bracket
+```
+
+含点号的 key 必须用引号包裹，否则会被拆分。字符串形式不适合复杂场景时，请用数组形式。
+
 ### doc.set(platform, data, path?)
 
 覆盖写入：先移除该位置该平台已有的条件数据，再写入新的。`path` 可选，省略时操作根级。
+
+`data` 支持对象、数组、标量（string / number / boolean / null）。标量 `data` 会把 `path` 最后一段作为 key 写入父容器，等价于单字段对象：
+
+```ts
+// 以下两行等价
+doc.set('MP-WEIXIN', '微信', ['pages', 0, 'style', 'navigationBarTitleText'])
+doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style'])
+```
+
+标量写入要求 `path` 非空且最后一段是 string（数组索引不支持标量替换，请用对象包装）。
 
 ```ts
 // 根级
@@ -74,22 +106,39 @@ doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style']
 
 // 嵌套路径（字符串形式）
 doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, 'pages.0.style')
+
+// 标量叶子
+doc.set('MP-WEIXIN', '微信', 'pages[0].style.navigationBarTitleText')
 ```
 
 ### doc.merge(platform, data, path?)
 
-增量写入：不移除已有条件数据。对象 → 合并字段，数组 → 追加元素。
+增量写入：不移除已有条件数据。对象 → 合并字段，数组 → 追加元素。`data` 同样支持标量叶子。
 
 ```ts
 doc.merge('MP-WEIXIN', [{ path: 'pages/wx2' }], 'pages')
+doc.merge('MP-WEIXIN', '追加值', ['pages', 0, 'style', 'navigationBarTitleText'])
 ```
 
-### doc.delete(platform, path?)
+### doc.delete(platform, path?, options?)
 
 删除该位置该平台的条件数据。
 
 ```ts
 doc.delete('MP-WEIXIN', 'pages')
+```
+
+`options.semantic`（默认 `false`）控制匹配方式：
+
+- `false`（默认）：**精确匹配** `platform` 字段。`#ifdef H5 || MP-WEIXIN` 的块不会被 `delete('MP-WEIXIN')` 删除，因为表达式字符串不等。这也是 `set` 覆盖时使用的匹配方式，保证覆盖语义可预期。
+- `true`：**语义匹配**，用 `matchPlatform` 判断该条件块在指定平台是否生效。能删除复合表达式（`H5 || MP-WEIXIN`）和 `#ifndef` 命中块。
+
+```ts
+// 精确：删不掉 #ifdef H5 || MP-WEIXIN 块
+doc.delete('MP-WEIXIN', 'pages')
+
+// 语义：删掉所有在 MP-WEIXIN 平台生效的条件块（含复合表达式、ifndef H5）
+doc.delete('MP-WEIXIN', 'pages', { semantic: true })
 ```
 
 ### 与平台无关的配置（COMMON）
@@ -183,7 +232,10 @@ doc.evaluate('MP-WEIXIN')
 
 - 逗号策略：仅剔除条件节点，不自动修正逗号。输入需保证编译前后都合法（贴合 uniapp 官方约束）。
 - `evaluate` 中同 key 后出现的 member 覆盖前者（uniapp 行为）。
-- `stringify` 统一输出 `//` 风格注释，即使输入是 `/* */`。
+- `stringify` 统一输出 `//` 风格注释，即使输入是 `/* */`。往返非无损（会丢失非条件注释、原始缩进等）。
+- `set` / `merge` 只产出 `#ifdef` 条件块，不产出 `#ifndef`（如需 `#ifndef` 请手工编辑源文件或等待后续 API）。
+- `delete` 默认精确匹配 `platform` 字段，复合表达式需用 `{ semantic: true }` 才能按语义删除。
+- 平台名大小写敏感：`set('mp-weixin', ...)` 会生成 `#ifdef mp-weixin`，而 `evaluate('MP-WEIXIN')` 匹配不到。
 
 ## License
 

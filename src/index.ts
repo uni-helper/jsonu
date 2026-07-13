@@ -1,14 +1,14 @@
-import type { Path, TreeNode } from './types'
+import type { Condition, Path, TreeNode } from './types'
 import { parse as momoaParse } from '@humanwhocodes/momoa'
-import { parseConditions } from './conditions'
+import { matchPlatform, parseConditions } from './conditions'
 import { buildTree, evaluateTree, stringifyTree } from './tree'
 import { COMMON } from './types'
 
 export class JsonuDocument {
   constructor(private root: TreeNode) {}
 
-  evaluate(platform: string): unknown {
-    return evaluateTree(this.root, platform)
+  evaluate<T = unknown>(platform: string): T {
+    return evaluateTree(this.root, platform) as T
   }
 
   stringify(indent = 2): string {
@@ -18,7 +18,12 @@ export class JsonuDocument {
   // 覆盖：移除该位置该平台已有的条件数据，再写入新的
   // COMMON 走按 key 删的精细语义（避免误清同容器内其他通用配置）
   // 路径不存在时按 data 类型自动创建中间对象/数组
+  // 标量 data：把 path 最后一段作为 key，包成单字段对象写入父容器
   set(platform: string, data: unknown, path?: Path): this {
+    if (isScalar(data)) {
+      const { parentPath, key } = splitScalarPath(path)
+      return this.set(platform, { [key]: data }, parentPath)
+    }
     const leafType = Array.isArray(data) ? 'array' : 'object'
     // create=true 时 navigate 一定返回节点或抛错，不会 undefined
     const container = this.navigate(path, true, leafType)!
@@ -32,7 +37,12 @@ export class JsonuDocument {
 
   // 添加：对象→合并字段，数组→追加元素；不移除已有
   // 路径不存在时按 data 类型自动创建中间对象/数组
+  // 标量 data：把 path 最后一段作为 key，包成单字段对象合并进父容器
   merge(platform: string, data: unknown, path?: Path): this {
+    if (isScalar(data)) {
+      const { parentPath, key } = splitScalarPath(path)
+      return this.merge(platform, { [key]: data }, parentPath)
+    }
     const leafType = Array.isArray(data) ? 'array' : 'object'
     const container = this.navigate(path, true, leafType)!
     this.addConditional(container, data, platform)
@@ -40,10 +50,11 @@ export class JsonuDocument {
   }
 
   // 路径不存在时 no-op（删除不存在的数据是合法的空操作）
-  delete(platform: string, path?: Path): this {
+  // options.semantic=true 时按语义匹配（matchPlatform），可删除复合表达式条件块
+  delete(platform: string, path?: Path, options?: { semantic?: boolean }): this {
     const container = this.navigate(path, false)
     if (container)
-      this.removeConditional(container, platform)
+      this.removeConditional(container, platform, options?.semantic)
     return this
   }
 
@@ -110,9 +121,11 @@ export class JsonuDocument {
     return current
   }
 
-  // 删除由 set/merge 用同一 platform 字符串写入的条件块（精确匹配 platform 字段）
-  // platform === COMMON 时删除无 condition 的通用节点（用于 delete）
-  private removeConditional(container: TreeNode, platform: string): void {
+  // 删除条件块
+  // semantic=false（默认，set 用）：精确匹配 platform 字段，保证 set 覆盖语义可预期
+  // semantic=true（delete 可选）：用 matchPlatform 语义匹配，命中复合表达式（如 'H5 || MP-WEIXIN'）
+  // platform === COMMON 时删除无 condition 的通用节点
+  private removeConditional(container: TreeNode, platform: string, semantic = false): void {
     if (platform === COMMON) {
       if (container.type === 'object') {
         container.members = container.members.filter(m => m.condition)
@@ -122,14 +135,17 @@ export class JsonuDocument {
       }
       return
     }
+    const match = semantic
+      ? (cond: Condition) => matchPlatform(cond, platform)
+      : (cond: Condition) => cond.platform === platform
     if (container.type === 'object') {
       container.members = container.members.filter(
-        m => !(m.condition && m.condition.platform === platform),
+        m => !(m.condition && match(m.condition)),
       )
     }
     else if (container.type === 'array') {
       container.elements = container.elements.filter(
-        el => !(el.condition && el.condition.platform === platform),
+        el => !(el.condition && match(el.condition)),
       )
     }
   }
@@ -177,7 +193,46 @@ function normalizePath(path?: Path): (string | number)[] {
     return []
   if (Array.isArray(path))
     return path
-  return path.split('.').map(seg => /^\d+$/.test(seg) ? Number(seg) : seg)
+  return parsePathString(path)
+}
+
+// 解析路径字符串，支持 dot / bracket / 引号包裹的 key
+// 例: 'pages[0].style' / 'a["b.c"].d' / 'pages.0.style' / "['x']['y']"
+// 纯数字段（含 bracket 内）转 number 作数组索引；引号包裹的段保留原始字符串
+function parsePathString(str: string): (string | number)[] {
+  const result: (string | number)[] = []
+  const re = /\['([^']*)'\]|\["([^"]*)"\]|(\d+)|([^.[\]]+)/g
+  for (let m = re.exec(str); m !== null; m = re.exec(str)) {
+    if (m[1] !== undefined)
+      result.push(m[1])
+    else if (m[2] !== undefined)
+      result.push(m[2])
+    else if (m[3] !== undefined)
+      result.push(Number(m[3]))
+    else if (m[4] !== undefined)
+      result.push(m[4])
+  }
+  return result
+}
+
+// 标量叶子写入：path 最后一段作为 key，剩余作为父容器路径
+// 要求 path 非空且最后一段是 string（数组索引不支持标量替换）
+function splitScalarPath(path: Path | undefined): { parentPath: (string | number)[] | undefined, key: string } {
+  const segs = normalizePath(path)
+  if (segs.length === 0)
+    throw new Error('标量数据需要 path 指定目标 key')
+  const last = segs[segs.length - 1]
+  if (typeof last !== 'string')
+    throw new Error('标量叶子的 path 最后一段必须是 string key（数组请用对象包装）')
+  const parent = segs.slice(0, -1)
+  return { parentPath: parent.length ? parent : undefined, key: last }
+}
+
+function isScalar(value: unknown): boolean {
+  return value === null
+    || typeof value === 'string'
+    || typeof value === 'number'
+    || typeof value === 'boolean'
 }
 
 function toTreeNode(value: unknown): TreeNode {
