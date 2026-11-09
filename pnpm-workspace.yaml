@@ -1,9 +1,9 @@
-catalogMode: prefer
 ignoreWorkspaceRootCheck: true
+catalogMode: prefer
 minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
 shellEmulator: true
 
-trustPolicy: no-downgrade
 packages:
   - playground
   - docs
