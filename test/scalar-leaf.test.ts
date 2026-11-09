@@ -5,19 +5,39 @@ import { jsonu } from './fixtures'
 describe('标量叶子写入', () => {
   it('set 用字符串标量覆盖嵌套 key', () => {
     const doc = parse(jsonu)
-    doc.set('MP-WEIXIN', '微信首页', ['pages', 0, 'style', 'navigationBarTitleText'])
+    doc.set('MP-WEIXIN', '微信首页', [
+      'pages',
+      0,
+      'style',
+      'navigationBarTitleText',
+    ])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '微信首页' } },
-        { path: 'pages/wx', style: { navigationBarTitleText: '微信' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '微信首页' },
+        },
+        {
+          path: 'pages/wx',
+          style: { navigationBarTitleText: '微信' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
     // H5 平台保留原默认值
     expect(doc.evaluate('H5')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '默认' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '默认' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
   })
@@ -25,7 +45,12 @@ describe('标量叶子写入', () => {
   it('set 标量等价于单字段对象写入', () => {
     const doc1 = parse(jsonu)
     const doc2 = parse(jsonu)
-    doc1.set('MP-WEIXIN', '微信首页', ['pages', 0, 'style', 'navigationBarTitleText'])
+    doc1.set('MP-WEIXIN', '微信首页', [
+      'pages',
+      0,
+      'style',
+      'navigationBarTitleText',
+    ])
     doc2.set('MP-WEIXIN', { navigationBarTitleText: '微信首页' }, ['pages', 0, 'style'])
     expect(doc1.stringify()).toBe(doc2.stringify())
   })
@@ -62,19 +87,35 @@ describe('标量叶子写入', () => {
     const doc = parse(`{}`)
     doc.set('MP-WEIXIN', '微信', ['pages', 0, 'title'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      pages: [{ title: '微信' }],
+      pages: [
+        { title: '微信' },
+      ],
     })
   })
 
   it('merge 标量叶子：不覆盖已有同平台条件', () => {
     const doc = parse(jsonu)
-    doc.merge('MP-WEIXIN', '追加值', ['pages', 0, 'style', 'navigationBarTitleText'])
+    doc.merge('MP-WEIXIN', '追加值', [
+      'pages',
+      0,
+      'style',
+      'navigationBarTitleText',
+    ])
     // merge 不删已有，两个同 key 同平台的 member 并存，后者覆盖前者（uniapp 行为）
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '追加值' } },
-        { path: 'pages/wx', style: { navigationBarTitleText: '微信' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '追加值' },
+        },
+        {
+          path: 'pages/wx',
+          style: { navigationBarTitleText: '微信' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
   })

@@ -8,8 +8,14 @@ describe('delete', () => {
     doc.delete('MP-WEIXIN', ['pages'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '默认' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '默认' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
   })
@@ -34,7 +40,9 @@ describe('delete', () => {
     // 再 delete('H5') 才会移除 ifndef H5 块
     doc.delete('H5', ['pages'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      pages: [{ path: 'pages/index' }],
+      pages: [
+        { path: 'pages/index' },
+      ],
     })
   })
 })

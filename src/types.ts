@@ -29,7 +29,7 @@ export interface ConditionalRange {
   condition: Condition
 }
 
-// 路径
+// 访问路径：对象 key 与数组索引组成的数组
 export type Path = (string | number)[]
 
 // 与平台无关的配置标识

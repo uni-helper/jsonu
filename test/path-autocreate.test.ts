@@ -6,11 +6,17 @@ describe('路径自动创建', () => {
     const doc = parse(`{}`)
     doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      pages: [{ style: { navigationBarTitleText: '微信' } }],
+      pages: [
+        {
+          style: { navigationBarTitleText: '微信' },
+        },
+      ],
     })
     // H5 平台 pages 数组 + 中间 style 节点都保留（无 condition 的通用结构）
     expect(doc.evaluate('H5')).toEqual({
-      pages: [{ style: {} }],
+      pages: [
+        { style: {} },
+      ],
     })
     expect(doc.stringify()).toMatchInlineSnapshot(`
       "{
@@ -29,17 +35,29 @@ describe('路径自动创建', () => {
 
   it('set 用单段路径自动创建', () => {
     const doc = parse(`{}`)
-    doc.set('MP-WEIXIN', { list: [{ pagePath: 'pages/wx' }] }, ['tabBar'])
+    doc.set('MP-WEIXIN', {
+      list: [
+        { pagePath: 'pages/wx' },
+      ],
+    }, ['tabBar'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      tabBar: { list: [{ pagePath: 'pages/wx' }] },
+      tabBar: {
+        list: [
+          { pagePath: 'pages/wx' },
+        ],
+      },
     })
   })
 
   it('merge 在不存在的路径上自动创建并追加', () => {
     const doc = parse(`{}`)
-    doc.merge('MP-WEIXIN', [{ path: 'pages/wx' }], ['pages'])
+    doc.merge('MP-WEIXIN', [
+      { path: 'pages/wx' },
+    ], ['pages'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      pages: [{ path: 'pages/wx' }],
+      pages: [
+        { path: 'pages/wx' },
+      ],
     })
     expect(doc.evaluate('H5')).toEqual({
       pages: [],
@@ -51,7 +69,11 @@ describe('路径自动创建', () => {
     // pages 已存在但是空数组，set 应自动创建 pages[0].style
     doc.set('MP-WEIXIN', { navigationBarTitleText: '微信' }, ['pages', 0, 'style'])
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
-      pages: [{ style: { navigationBarTitleText: '微信' } }],
+      pages: [
+        {
+          style: { navigationBarTitleText: '微信' },
+        },
+      ],
     })
   })
 
