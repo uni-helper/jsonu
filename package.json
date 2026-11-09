@@ -41,7 +41,6 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:cli",
-    "@antfu/utils": "catalog:inlined",
     "@humanwhocodes/momoa": "catalog:json",
     "@types/node": "catalog:types",
     "bumpp": "catalog:cli",

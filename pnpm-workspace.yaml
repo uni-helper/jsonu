@@ -1,9 +1,9 @@
-ignoreWorkspaceRootCheck: true
 catalogMode: prefer
+ignoreWorkspaceRootCheck: true
 minimumReleaseAgeExcludePrune: true
-trustPolicy: no-downgrade
 shellEmulator: true
 
+trustPolicy: no-downgrade
 packages:
   - playground
   - docs
@@ -25,8 +25,6 @@ catalogs:
     tsdown: ^0.23.7
     typescript: ^6.0.3
     vite: ^8.3.6
-  inlined:
-    '@antfu/utils': ^9.3.0
   json:
     '@humanwhocodes/momoa': ^3.3.13
   testing:
