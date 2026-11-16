@@ -7,8 +7,14 @@ describe('evaluate', () => {
     const doc = parse(jsonu)
     expect(doc.evaluate('H5')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '默认' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '默认' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
   })
@@ -17,9 +23,18 @@ describe('evaluate', () => {
     const doc = parse(jsonu)
     expect(doc.evaluate('MP-WEIXIN')).toEqual({
       pages: [
-        { path: 'pages/index', style: { navigationBarTitleText: '默认' } },
-        { path: 'pages/wx', style: { navigationBarTitleText: '微信' } },
-        { path: 'pages/about', style: { navigationBarTitleText: '关于' } },
+        {
+          path: 'pages/index',
+          style: { navigationBarTitleText: '默认' },
+        },
+        {
+          path: 'pages/wx',
+          style: { navigationBarTitleText: '微信' },
+        },
+        {
+          path: 'pages/about',
+          style: { navigationBarTitleText: '关于' },
+        },
       ],
     })
   })

@@ -1,8 +1,9 @@
 import type { Condition, ConditionalRange } from './types'
 
 // 指令正则（同时支持 // 和 /* */ 注释）
-// 行注释: // #ifdef PLATFORM
-// 块注释: /* #ifdef PLATFORM */
+// 行注释：// #ifdef PLATFORM
+// 块注释：/* #ifdef PLATFORM */
+// 写法固定：#ifdef 前只有一个空格（"// #ifdef X" 或 "/* #ifdef X */"），#endif 后面不能跟内容
 const RE_IFDEF = /^\/\/ #ifdef (\S.*)$|^\/\* #ifdef (\S.*?) \*\/$/
 const RE_IFNDEF = /^\/\/ #ifndef (\S.*)$|^\/\* #ifndef (\S.*?) \*\/$/
 const RE_ENDIF = /^\/\/ #endif$|^\/\* #endif \*\/$/
@@ -26,13 +27,19 @@ export function parseConditions(tokens: CommentToken[]): ConditionalRange[] {
 
     if (ifdef) {
       stack.push({
-        condition: { kind: 'ifdef', platform: (ifdef[1] ?? ifdef[2]).trim() },
+        condition: {
+          kind: 'ifdef',
+          platform: (ifdef[1] ?? ifdef[2]).trim(),
+        },
         start: token.range[1], // 注释结束位置
       })
     }
     else if (ifndef) {
       stack.push({
-        condition: { kind: 'ifndef', platform: (ifndef[1] ?? ifndef[2]).trim() },
+        condition: {
+          kind: 'ifndef',
+          platform: (ifndef[1] ?? ifndef[2]).trim(),
+        },
         start: token.range[1],
       })
     }
@@ -59,7 +66,7 @@ export function findRange(ranges: ConditionalRange[], offset: number): Condition
   let match: ConditionalRange | undefined
   for (const r of ranges) {
     if (offset >= r.start && offset <= r.end) {
-      // 取最内层（后出现的嵌套更深）
+      // 取被包含的区间（嵌套时即最内层）
       if (!match || (r.start >= match.start && r.end <= match.end))
         match = r
     }
@@ -72,5 +79,7 @@ export function findRange(ranges: ConditionalRange[], offset: number): Condition
 export function matchPlatform(condition: Condition, platform: string): boolean {
   const platforms = condition.platform.split('||').map(p => p.trim())
   const hit = platforms.includes(platform)
-  return condition.kind === 'ifdef' ? hit : !hit
+  return condition.kind === 'ifdef'
+    ? hit
+    : !hit
 }

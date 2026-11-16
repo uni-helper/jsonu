@@ -1,10 +1,8 @@
-catalogMode: prefer
 ignoreWorkspaceRootCheck: true
-minimumReleaseAgeExclude:
-  - '@types/node@25.9.0'
-  - tsx@4.22.2
-shellEmulator: true
+catalogMode: prefer
+minimumReleaseAgeExcludePrune: true
 trustPolicy: no-downgrade
+shellEmulator: true
 
 packages:
   - playground
@@ -14,29 +12,23 @@ packages:
 
 allowBuilds:
   esbuild: true
-  simple-git-hooks: true
+
 catalog:
+
 catalogs:
   cli:
-    '@antfu/eslint-config': ^9.0.0
-    '@antfu/ni': ^30.1.0
-    bumpp: ^11.1.0
-    eslint: ^10.4.0
-    nano-staged: ^1.0.2
-    publint: ^0.3.21
-    simple-git-hooks: ^2.13.1
-    skills-npm: ^1.1.1
-    tsdown: ^0.22.0
-    tsx: ^4.22.2
+    '@antfu/eslint-config': ^10.0.0
+    bumpp: ^12.3.0
+    eslint: ^10.14.0
+    publint: ^0.3.25
+    skills-npm: ^4.1.0
+    tsdown: ^0.23.7
     typescript: ^6.0.3
-    vite: ^8.0.13
-  inlined:
-    '@antfu/utils': ^9.3.0
+    vite: ^8.3.6
   json:
-    '@humanwhocodes/momoa': ^3.3.10
+    '@humanwhocodes/momoa': ^3.3.13
   testing:
-    tsdown-stale-guard: ^0.1.2
-    tsnapi: ^0.3.3
-    vitest: ^4.1.6
+    tsdown-stale-guard: ^0.1.3
+    vitest: ^5.1.0
   types:
-    '@types/node': ^25.9.0
+    '@types/node': ^26.6.6

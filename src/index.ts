@@ -24,7 +24,9 @@ export class JsonuDocument {
       const { parentPath, key } = splitScalarPath(path)
       return this.set(platform, { [key]: data }, parentPath)
     }
-    const leafType = Array.isArray(data) ? 'array' : 'object'
+    const leafType = Array.isArray(data)
+      ? 'array'
+      : 'object'
     // create=true 时 navigate 一定返回节点或抛错，不会 undefined
     const container = this.navigate(path, true, leafType)!
     if (platform === COMMON)
@@ -35,7 +37,7 @@ export class JsonuDocument {
     return this
   }
 
-  // 添加：对象→合并字段，数组→追加元素；不移除已有
+  // 添加：对象追加成员，数组追加元素；不移除已有（同 key 时由 evaluate 取后出现的）
   // 路径不存在时按 data 类型自动创建中间对象/数组
   // 标量 data：把 path 最后一段作为 key，包成单字段对象合并进父容器
   merge(platform: string, data: unknown, path?: Path): this {
@@ -43,7 +45,9 @@ export class JsonuDocument {
       const { parentPath, key } = splitScalarPath(path)
       return this.merge(platform, { [key]: data }, parentPath)
     }
-    const leafType = Array.isArray(data) ? 'array' : 'object'
+    const leafType = Array.isArray(data)
+      ? 'array'
+      : 'object'
     const container = this.navigate(path, true, leafType)!
     this.addConditional(container, data, platform)
     return this
@@ -74,7 +78,9 @@ export class JsonuDocument {
       // 节点类型：终点用 leafType，中间根据下一 seg 推断
       const nodeType: 'object' | 'array' = isLast && leafType
         ? leafType
-        : (typeof nextSeg === 'number' ? 'array' : 'object')
+        : (typeof nextSeg === 'number'
+            ? 'array'
+            : 'object')
 
       if (typeof seg === 'number') {
         if (current.type !== 'array') {
@@ -88,7 +94,7 @@ export class JsonuDocument {
             return undefined
           // 仅允许追加到末尾，禁止跳过索引填充
           if (seg !== current.elements.length)
-            throw new Error(`数组索引越界: ${seg}（当前长度 ${current.elements.length}）`)
+            throw new Error(`数组索引越界：${seg}（当前长度 ${current.elements.length}）`)
           const newNode: TreeNode = nodeType === 'array'
             ? { type: 'array', elements: [] }
             : { type: 'object', members: [] }
@@ -166,20 +172,26 @@ export class JsonuDocument {
 
   private addConditional(container: TreeNode, data: unknown, platform: string): void {
     const node = toTreeNode(data)
-    const condition = platform === COMMON ? undefined : { kind: 'ifdef' as const, platform }
+    const condition = platform === COMMON
+      ? undefined
+      : { kind: 'ifdef' as const, platform }
 
     if (container.type === 'object') {
       if (node.type !== 'object')
         throw new Error('对象容器需要对象数据')
       for (const m of node.members) {
-        container.members.push(condition ? { ...m, condition } : m)
+        container.members.push(condition
+          ? { ...m, condition }
+          : m)
       }
     }
     else if (container.type === 'array') {
       if (node.type !== 'array')
         throw new Error('数组容器需要数组数据')
       for (const el of node.elements) {
-        container.elements.push(condition ? { ...el, condition } : el)
+        container.elements.push(condition
+          ? { ...el, condition }
+          : el)
       }
     }
     else {
@@ -200,9 +212,12 @@ function splitScalarPath(path: Path | undefined): { parentPath: (string | number
     throw new Error('标量数据需要 path 指定目标 key')
   const last = segs[segs.length - 1]
   if (typeof last !== 'string')
-    throw new Error('标量叶子的 path 最后一段必须是 string key（数组请用对象包装）')
+    throw new TypeError('标量叶子的 path 最后一段必须是 string key（数组请用对象包装）')
   const parent = segs.slice(0, -1)
-  return { parentPath: parent.length ? parent : undefined, key: last }
+  return {
+    parentPath: parent.length ? parent : undefined,
+    key: last,
+  }
 }
 
 function isScalar(value: unknown): boolean {
@@ -217,11 +232,24 @@ function toTreeNode(value: unknown): TreeNode {
     return { type: 'value', value: null }
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
     return { type: 'value', value }
-  if (Array.isArray(value))
-    return { type: 'array', elements: value.map(v => ({ value: toTreeNode(v) })) }
-  if (typeof value === 'object')
-    return { type: 'object', members: Object.entries(value as Record<string, unknown>).map(([k, v]) => ({ key: k, value: toTreeNode(v) })) }
-  throw new Error(`不支持的数据类型: ${typeof value}`)
+  if (Array.isArray(value)) {
+    return {
+      type: 'array',
+      elements: value.map(v => ({
+        value: toTreeNode(v),
+      })),
+    }
+  }
+  if (typeof value === 'object') {
+    return {
+      type: 'object',
+      members: Object.entries(value as Record<string, unknown>).map(([k, v]) => ({
+        key: k,
+        value: toTreeNode(v),
+      })),
+    }
+  }
+  throw new Error(`不支持的数据类型：${typeof value}`)
 }
 
 export function parse(jsonu: string): JsonuDocument {
@@ -234,7 +262,10 @@ export function parse(jsonu: string): JsonuDocument {
   // 筛出注释 token
   const commentTokens = (ast.tokens ?? [])
     .filter(t => t.type === 'LineComment' || t.type === 'BlockComment')
-    .map(t => ({ range: t.range as [number, number], text: jsonu.slice(...(t.range as [number, number])) }))
+    .map(t => ({
+      range: t.range as [number, number],
+      text: jsonu.slice(...(t.range as [number, number])),
+    }))
 
   const ranges = parseConditions(commentTokens)
   const tree = buildTree(ast.body, ranges)

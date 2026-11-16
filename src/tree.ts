@@ -8,7 +8,7 @@ import type {
 import { findRange, matchPlatform } from './conditions'
 
 // momoa AST → 条件树
-// inheritedRange: 当前已处于的条件区间，子节点查到同一区间时不重复标记
+// inheritedRange：当前已处于的条件区间，子节点查到同一区间时不重复标记
 export function buildTree(node: MomoaNode, ranges: ConditionalRange[], inheritedRange?: ConditionalRange): TreeNode {
   const n = node as any
   switch (n.type) {
@@ -25,11 +25,15 @@ export function buildTree(node: MomoaNode, ranges: ConditionalRange[], inherited
         type: 'object',
         members: n.members.map((m: any) => {
           const r = findRange(ranges, m.range[0])
-          const condition = r && r !== inheritedRange ? r.condition : undefined
+          const condition = r && r !== inheritedRange
+            ? r.condition
+            : undefined
           return {
             key: m.name.value,
             value: buildTree(m.value, ranges, r ?? inheritedRange),
-            ...(condition ? { condition } : {}),
+            ...(condition
+              ? { condition }
+              : {}),
           } satisfies MemberNode
         }),
       }
@@ -38,15 +42,19 @@ export function buildTree(node: MomoaNode, ranges: ConditionalRange[], inherited
         type: 'array',
         elements: n.elements.map((el: any) => {
           const r = findRange(ranges, el.value.range[0])
-          const condition = r && r !== inheritedRange ? r.condition : undefined
+          const condition = r && r !== inheritedRange
+            ? r.condition
+            : undefined
           return {
             value: buildTree(el.value, ranges, r ?? inheritedRange),
-            ...(condition ? { condition } : {}),
+            ...(condition
+              ? { condition }
+              : {}),
           } satisfies ElementNode
         }),
       }
     default:
-      throw new Error(`未知的节点类型: ${(node as any).type}`)
+      throw new Error(`未知的节点类型：${(node as any).type}`)
   }
 }
 
@@ -60,7 +68,7 @@ export function evaluateTree(node: TreeNode, platform: string): unknown {
       for (const m of node.members) {
         if (m.condition && !matchPlatform(m.condition, platform))
           continue
-        // 后出现的同 key member 覆盖前者（uniapp 行为）
+        // 同 key 时后出现的覆盖前面的（与 JSON.parse 一致）
         result[m.key] = evaluateTree(m.value, platform)
       }
       return result
@@ -89,7 +97,9 @@ function stringifyNode(node: TreeNode, depth: number, indent: number): string {
         return '{}'
       const lines = node.members.map((m, i) => {
         const valueStr = stringifyNode(m.value, depth + 1, indent)
-        const comma = i < node.members.length - 1 ? ',' : ''
+        const comma = i < node.members.length - 1
+          ? ','
+          : ''
         const line = `${pad}"${m.key}": ${valueStr}${comma}`
         return m.condition
           ? wrapCondition(line, m.condition, pad)
@@ -102,7 +112,9 @@ function stringifyNode(node: TreeNode, depth: number, indent: number): string {
         return '[]'
       const lines = node.elements.map((el, i) => {
         const valueStr = stringifyNode(el.value, depth + 1, indent)
-        const comma = i < node.elements.length - 1 ? ',' : ''
+        const comma = i < node.elements.length - 1
+          ? ','
+          : ''
         const line = `${pad}${valueStr}${comma}`
         return el.condition
           ? wrapCondition(line, el.condition, pad)
